@@ -1,0 +1,93 @@
+﻿@using IdentityFrameworkPractice.ViewModels
+@model LoginViewModel
+
+<div class="container">
+    <div class="card shadow-lg mt-5">
+        <div class="card-header bg-primary text-white text-center">
+            <h2>Log In</h2>
+            <p>Use a local account to log in.</p>
+        </div>
+        <div class="card-body p-4">
+            <form asp-controller="Account" asp-action="Login" asp-route-returnurl="@Model.ReturnUrl" method="post" role="form" class="needs-validation">
+
+                <div class="form-group mb-3">
+                    <label asp-for="UserName" class="form-label fw-bold">Email</label>
+                    <input asp-for="UserName" class="form-control" placeholder="Enter your email" />
+                    <span asp-validation-for="UserName" class="text-danger small"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Password" class="form-label fw-bold">Password</label>
+                    <input asp-for="Password" class="form-control" placeholder="Enter your password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="RememberMe" class="form-check-input" id="rememberMeCheck" />
+                    <label asp-for="RememberMe" class="form-check-label" for="rememberMeCheck">
+                        @Html.DisplayNameFor(m => m.RememberMe)
+                    </label>
+                </div>
+
+                <div class="text-center mb-4">
+                    <button type="submit" class="btn btn-success w-100 py-2">Log In</button>
+                </div>
+
+                <p class="text-center">
+                    <a asp-action="Register" class="text-primary">Register as a new user?</a>
+                </p>
+
+                <p class="text-center">
+                    @* <a asp-action="ForgotPassword" class="text-primary">Forgot your password?</a> *@
+                </p>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
+
+<style>
+    .container {
+        max-width: 500px;
+        margin: auto;
+    }
+
+    .card {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        border-bottom: none;
+        padding: 2rem 1rem;
+    }
+
+    .form-control {
+        border-radius: 8px;
+    }
+
+    .form-check-input {
+        margin-right: 8px;
+    }
+
+    .btn-success {
+        border-radius: 8px;
+        font-size: 1.1rem;
+    }
+
+    .alert-danger {
+        border-radius: 8px;
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+        a:hover {
+            text-decoration: underline;
+        }
+</style>

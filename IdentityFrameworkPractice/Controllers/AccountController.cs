@@ -20,6 +20,34 @@ namespace IdentityFrameworkPractice.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            LoginViewModel loginViewModel = new LoginViewModel();
+            loginViewModel.ReturnUrl = returnUrl ?? Url.Content("~/");
+            return View(loginViewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel loginViewModel, string returnUrl)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _signInManager.PasswordSignInAsync(loginViewModel.UserName, loginViewModel.Password, loginViewModel.RememberMe, lockoutOnFailure: false);
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt");
+                    return View(loginViewModel);
+                }
+            }
+            return View(loginViewModel);
+        }
+
         public async Task<IActionResult> Register(string? returnUrl = null)
         {
             RegisterViewModel registerViewModel = new RegisterViewModel();
@@ -48,6 +76,14 @@ namespace IdentityFrameworkPractice.Controllers
                 ModelState.AddModelError("Password", "Password not unique enough");
             }
             return View(registerViewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Home");
         }
     }
 }
