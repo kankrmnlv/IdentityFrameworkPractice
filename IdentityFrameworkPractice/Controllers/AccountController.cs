@@ -9,15 +9,42 @@ namespace IdentityFrameworkPractice.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly ISendGridEmail _sendGridEmail;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ISendGridEmail sendGridEmail)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _sendGridEmail = sendGridEmail;
         }
         public IActionResult Index()
         {
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel forgotPasswordViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(forgotPasswordViewModel.Email);
+                if(user == null)
+                {
+                    return RedirectToAction("ForgotPasswordConfirmation");
+                }
+                var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code}, protocol: HttpContext.Request.Scheme);
+
+                await _sendGridEmail.SendEmailAsync(forgotPasswordViewModel.Email, "Reset Email Confirmation", "Reset email link: " + callbackUrl);
+                return RedirectToAction("ForgotPasswordConfirmation");
+            }
+            return View(forgotPasswordViewModel);
         }
 
         [HttpGet]
@@ -34,10 +61,14 @@ namespace IdentityFrameworkPractice.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(loginViewModel.UserName, loginViewModel.Password, loginViewModel.RememberMe, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(loginViewModel.UserName, loginViewModel.Password, loginViewModel.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
+                }
+                if (result.IsLockedOut)
+                {
+                    return View("Lockout");
                 }
                 else
                 {
@@ -76,6 +107,12 @@ namespace IdentityFrameworkPractice.Controllers
                 ModelState.AddModelError("Password", "Password not unique enough");
             }
             return View(registerViewModel);
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
         }
 
         [HttpPost]
