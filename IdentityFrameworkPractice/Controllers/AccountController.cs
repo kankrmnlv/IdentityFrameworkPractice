@@ -3,6 +3,7 @@ using IdentityFrameworkPractice.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace IdentityFrameworkPractice.Controllers
@@ -12,12 +13,15 @@ namespace IdentityFrameworkPractice.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ISendGridEmail _sendGridEmail;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ISendGridEmail sendGridEmail)
+        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ISendGridEmail sendGridEmail,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _sendGridEmail = sendGridEmail;
+            _roleManager = roleManager;
         }
         public IActionResult Index()
         {
@@ -154,9 +158,27 @@ namespace IdentityFrameworkPractice.Controllers
             return View(externalLoginViewModel);
         }
 
+        [HttpGet]
         public async Task<IActionResult> Register(string? returnUrl = null)
         {
+            if(!await _roleManager.RoleExistsAsync("Teacher"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Teacher"));
+                await _roleManager.CreateAsync(new IdentityRole("Student"));
+            }
+            List<SelectListItem> listItems = new List<SelectListItem>();
+            listItems.Add(new SelectListItem
+            {
+                Value = "Teacher",
+                Text = "Teacher"
+            });
+            listItems.Add(new SelectListItem
+            {
+                Value = "Student",
+                Text = "Student"
+            });
             RegisterViewModel registerViewModel = new RegisterViewModel();
+            registerViewModel.RoleList = listItems;
             registerViewModel.ReturnUrl = returnUrl;
             return View(registerViewModel);
         }
@@ -176,6 +198,15 @@ namespace IdentityFrameworkPractice.Controllers
                 var result = await _userManager.CreateAsync(user, registerViewModel.Password);
                 if (result.Succeeded)
                 {
+                    if(registerViewModel.RoleSelected != null && registerViewModel.RoleSelected.Length > 0 && registerViewModel.RoleSelected == "Student")
+                    {
+                        await _userManager.AddToRoleAsync(user, "Student");
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(user, "Teacher");
+
+                    }
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return LocalRedirect(returnUrl);
                 }
