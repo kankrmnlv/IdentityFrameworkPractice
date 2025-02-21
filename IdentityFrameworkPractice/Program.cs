@@ -18,6 +18,11 @@ namespace IdentityFrameworkPractice
             builder.Services.AddControllersWithViews();
             builder.Services.AddTransient<ISendGridEmail, SendGridEmail>();
             builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration.GetSection("SendGrid"));
+            builder.Services.AddAuthentication().AddGoogle(options =>
+            {
+                options.ClientId = "";
+                options.ClientSecret = "";
+            });
             builder.Services.Configure<IdentityOptions>(opt =>
             {
                 opt.Password.RequiredLength = 5;

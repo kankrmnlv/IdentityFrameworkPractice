@@ -1,5 +1,6 @@
 ﻿using IdentityFrameworkPractice.Models;
 using IdentityFrameworkPractice.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -77,6 +78,14 @@ namespace IdentityFrameworkPractice.Controllers
                 }
             }
             return View(loginViewModel);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public IActionResult ExternalLogin(string provider, string returnUrl = null)
+        {
+            return View();
         }
 
         public async Task<IActionResult> Register(string? returnUrl = null)
