@@ -1,0 +1,23 @@
+﻿@using IdentityFrameworkPractice.ViewModels
+@model ExternalLoginViewModel
+
+<h1>Register</h1>
+<h3>Associate your @ViewData["ProviderDisplayName"] account</h3>
+
+<form asp-controller="Account" asp-action="ExternalLoginConfirmation" method="post" role="form" asp-route-returnUrl="@ViewData["ReturnUrl"]">
+	<h4>please add additional info to make your acc better</h4>
+	<p>you have successfully authenticated to your @ViewData["ProviderDisplayName"] account</p>
+        <div class="form-group mb-3">
+            <label asp-for="Email" class="form-label fw-bold">Email</label>
+            <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+        <div class="form-group mb-3">
+            <label asp-for="Name" class="form-label fw-bold">Email</label>
+            <input asp-for="Name" class="form-control" placeholder="Enter your email" />
+            <span asp-validation-for="Name" class="text-danger small"></span>
+        </div>
+        <div class="text-center mb-4">
+            <button type="submit" class="btn btn-success w-100 py-2">Log In</button>
+        </div>
+</form>

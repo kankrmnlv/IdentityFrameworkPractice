@@ -3,6 +3,7 @@ using IdentityFrameworkPractice.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IdentityFrameworkPractice.Controllers
 {
@@ -62,7 +63,7 @@ namespace IdentityFrameworkPractice.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(loginViewModel.UserName, loginViewModel.Password, loginViewModel.RememberMe, lockoutOnFailure: true);
+                var result = await _signInManager.PasswordSignInAsync(loginViewModel.Email, loginViewModel.Password, loginViewModel.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
@@ -85,7 +86,72 @@ namespace IdentityFrameworkPractice.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ExternalLogin(string provider, string returnUrl = null)
         {
-            return View();
+            var redirect = Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirect);
+            return Challenge(properties, provider);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
+        {
+            if(remoteError != null)
+            {
+                ModelState.AddModelError("", "Error from external provider");
+                return View("Login");
+            }
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if(info == null)
+            {
+                return RedirectToAction("Login");
+            }
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+            if (result.Succeeded)
+            {
+                await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+                return LocalRedirect(returnUrl);
+            }
+            else
+            {
+                ViewData["ReturnUrl"] = returnUrl;
+                ViewData["ProviderDisplayName"] = info.ProviderDisplayName;
+                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                return View("ExternalLoginConfirmation", new ExternalLoginViewModel { Email = email});
+            }
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExternalLoginConfirmation(ExternalLoginViewModel externalLoginViewModel, string? returnUrl = null)
+        {
+            returnUrl = returnUrl ?? Url.Content("~/");
+            if (ModelState.IsValid)
+            {
+                var info = await _signInManager.GetExternalLoginInfoAsync();
+                if(info == null)
+                {
+                    return View("Error");
+                }
+                var user = new AppUser
+                {
+                    UserName = externalLoginViewModel.Name,
+                    Email = externalLoginViewModel.Email
+                };
+                var result = await _userManager.CreateAsync(user);
+                if (result.Succeeded)
+                {
+                    result = await _userManager.AddLoginAsync(user, info);
+                    if (result.Succeeded)
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+                        return LocalRedirect(returnUrl);
+                    }
+                }
+                ModelState.AddModelError("Email", "User already exists");
+            }
+            ViewData["ReturnUrl"] = returnUrl;
+            return View(externalLoginViewModel);
         }
 
         public async Task<IActionResult> Register(string? returnUrl = null)

@@ -13,9 +13,9 @@
             <form asp-controller="Account" asp-action="Login" asp-route-returnurl="@Model.ReturnUrl" method="post" role="form" class="needs-validation">
 
                 <div class="form-group mb-3">
-                    <label asp-for="UserName" class="form-label fw-bold">Email</label>
-                    <input asp-for="UserName" class="form-control" placeholder="Enter your email" />
-                    <span asp-validation-for="UserName" class="text-danger small"></span>
+                    <label asp-for="Email" class="form-label fw-bold">Email</label>
+                    <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
                 </div>
 
                 <div class="form-group mb-3">
